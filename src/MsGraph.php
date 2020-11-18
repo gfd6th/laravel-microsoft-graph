@@ -131,7 +131,7 @@ class MsGraph
                     $accessToken->getExpires(), $id);
 
                 //get user details
-                $me = Api::get('me', null, $id);
+                $me = Api::get('/me', null, $id);
 
                 //find record and add email - not required but useful none the less
                 $t = MsGraphToken::findOrFail($result->id);
