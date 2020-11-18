@@ -3,8 +3,8 @@
 namespace Dcblogdev\MsGraph;
 
 /**
-* msgraph api documenation can be found at https://developer.msgraph.com/reference
-**/
+ * msgraph api documenation can be found at https://developer.msgraph.com/reference
+ **/
 
 use Dcblogdev\MsGraph\Facades\MsGraph as Api;
 use Dcblogdev\MsGraph\Models\MsGraphToken;
@@ -41,11 +41,34 @@ class MsGraph
         return new Tasks();
     }
 
+
+
     /**
      * Set the base url that all API requests use
      * @var string
      */
-    protected static $baseUrl = 'https://graph.microsoft.com/v1.0/';
+    // protected static $baseUrl = config('msgraph.graph_base_url');
+    protected function baseUrl()
+    {
+        return config('msgraph.isCN') ? 'https://microsoftgraph.chinacloudapi.cn/v1.0' : 'https://graph.microsoft.com/v1.0';
+    }
+
+    public function raw($path, $id = null)
+    {
+        $id = $id ? $id : auth()->id();
+        $client = new Client;
+
+        $response = $client->get($this->baseUrl() . $path, [
+            'headers'         => [
+                'Authorization' => 'Bearer ' . $this->getAccessToken($id),
+                'content-type'  => 'application/json',
+            ],
+            'allow_redirects' => false,
+        ]);
+
+        return $response->getHeaderLine('Location');
+
+    }
 
     /**
      * __call catches all requests when no found method is requested
@@ -64,7 +87,7 @@ class MsGraph
             return self::guzzle($function, $path, $data, $id);
         } else {
             //request verb is not in the $options array
-            throw new Exception($function.' is not a valid HTTP Verb');
+            throw new Exception($function . ' is not a valid HTTP Verb');
         }
     }
 
@@ -87,11 +110,11 @@ class MsGraph
             'urlAuthorize'            => config('msgraph.urlAuthorize'),
             'urlAccessToken'          => config('msgraph.urlAccessToken'),
             'urlResourceOwnerDetails' => config('msgraph.urlResourceOwnerDetails'),
-            'scopes'                  => config('msgraph.scopes')
+            'scopes'                  => config('msgraph.scopes'),
         ]);
 
         //when no code param redirect to Microsoft
-        if (!request()->has('code')) {
+        if ( ! request()->has('code')) {
 
             return redirect($provider->getAuthorizationUrl());
 
@@ -101,10 +124,11 @@ class MsGraph
             try {
                 // Get an access token using the authorization code grant
                 $accessToken = $provider->getAccessToken('authorization_code', [
-                    'code' => request('code')
+                    'code' => request('code'),
                 ]);
 
-                $result = $this->storeToken($accessToken->getToken(), $accessToken->getRefreshToken(), $accessToken->getExpires(), $id);
+                $result = $this->storeToken($accessToken->getToken(), $accessToken->getRefreshToken(),
+                    $accessToken->getExpires(), $id);
 
                 //get user details
                 $me = Api::get('me', null, $id);
@@ -117,7 +141,7 @@ class MsGraph
                 return redirect(config('msgraph.msgraphLandingUri'));
 
             } catch (IdentityProviderException $e) {
-                die('error:'.$e->getMessage());
+                die('error:' . $e->getMessage());
             }
 
         }
@@ -132,11 +156,11 @@ class MsGraph
     public function getAccessToken($id = null, $returnNullNoAccessToken = null)
     {
         //use id if passed otherwise use logged in user
-        $id    = ($id) ? $id : auth()->id();
+        $id = ($id) ? $id : auth()->id();
         $token = MsGraphToken::where('user_id', $id)->first();
 
         // Check if tokens exist otherwise run the oauth request
-        if (! isset($token->access_token)) {
+        if ( ! isset($token->access_token)) {
 
             //don't redirect simply return null when no token found with this option
             if ($returnNullNoAccessToken == true) {
@@ -160,7 +184,7 @@ class MsGraph
                 'urlAuthorize'            => config('msgraph.urlAuthorize'),
                 'urlAccessToken'          => config('msgraph.urlAccessToken'),
                 'urlResourceOwnerDetails' => config('msgraph.urlResourceOwnerDetails'),
-                'scopes'                  => config('msgraph.scopes')
+                'scopes'                  => config('msgraph.scopes'),
             ]);
 
             $newToken = $oauthClient->getAccessToken('refresh_token', ['refresh_token' => $token->refresh_token]);
@@ -201,7 +225,7 @@ class MsGraph
             'user_id'       => $id,
             'access_token'  => $access_token,
             'expires'       => $expires,
-            'refresh_token' => $refresh_token
+            'refresh_token' => $refresh_token,
         ]);
     }
 
@@ -218,13 +242,13 @@ class MsGraph
         try {
             $client = new Client;
 
-            $response = $client->$type(self::$baseUrl.$request, [
+            $response = $client->$type($this->baseUrl() . $request, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$this->getAccessToken($id),
-                    'content-type' => 'application/json',
-                    'Prefer' => config('msgraph.preferTimezone')
+                    'Authorization' => 'Bearer ' . $this->getAccessToken($id),
+                    'content-type'  => 'application/json',
+                    'Prefer'        => config('msgraph.preferTimezone'),
                 ],
-                'body' => json_encode($data),
+                'body'    => json_encode($data),
             ]);
 
             if ($response == null) {
@@ -247,8 +271,7 @@ class MsGraph
      */
     public function getPagination($data, $top, $skip)
     {
-        if (! is_array($data))
-        {
+        if ( ! is_array($data)) {
             dd($data);
         }
 
@@ -265,8 +288,8 @@ class MsGraph
 
         return [
             'total' => $total,
-            'top' => $top,
-            'skip' => $skip
+            'top'   => $top,
+            'skip'  => $skip,
         ];
     }
 }

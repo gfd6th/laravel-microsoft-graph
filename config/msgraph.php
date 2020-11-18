@@ -1,7 +1,7 @@
 <?php
-
 return [
 
+    'isCN' => env('IS_CN', true),
     /*
     * the clientId is set from the Microsoft portal to identify the application
     * https://apps.dev.microsoft.com
@@ -40,21 +40,24 @@ return [
     set the authorize url
     */
 
-    'urlAuthorize' => 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+
+
+    'urlAuthorize' =>  env('MSGRAPH_URL_AUTHORIZE', 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize'),
 
     /*
     set the token url
     */
-    'urlAccessToken' => 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    'urlAccessToken' => env('MSGRAPH_URL_AUTHORIZE_TOKEN', 'https://login.microsoftonline.com/common/oauth2/v2.0/token'),
+
 
     /*
     set the scopes to be used, Microsoft Graph API will accept up to 20 scopes
     */
 
-    'scopes' => 'offline_access openid calendars.readwrite contacts.readwrite files.readwrite mail.readwrite mail.send tasks.readwrite mailboxsettings.readwrite user.readwrite',
+    'scopes' => 'offline_access openid files.read files.read.all files.read.selected files.readwrite files.readwrite.all files.readwrite.appfolder files.readwrite.selected user.read',
 
     /*
     The default timezone is set to Europe/London this option allows you to set your prefered timetime
     */
-    'preferTimezone' => env('MSGRAPH_PREFER_TIMEZONE', 'outlook.timezone="Europe/London"'),
+    'preferTimezone' => env('MSGRAPH_PREFER_TIMEZONE', 'outlook.timezone="Asia/Shanghai"'),
 ];
